@@ -1,10 +1,11 @@
+import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
-import MkdSDK from "../utils/MkdSDK";
 import { useNavigate } from "react-router-dom";
+import * as yup from "yup";
 import { AuthContext } from "../authContext";
+import { GlobalContext, showToast } from "../globalContext";
+import MkdSDK from "../utils/MkdSDK";
 
 const AdminLoginPage = () => {
   const schema = yup
@@ -15,6 +16,7 @@ const AdminLoginPage = () => {
     .required();
 
   const { dispatch } = React.useContext(AuthContext);
+  const { dispatch: toastDispatch } = React.useContext(GlobalContext);
   const navigate = useNavigate();
   const {
     register,
@@ -28,6 +30,23 @@ const AdminLoginPage = () => {
   const onSubmit = async (data) => {
     let sdk = new MkdSDK();
     //TODO
+    const loginData = await sdk.login(data.email, data.password, "admin");
+    // check if there is no error / if it is successful
+    if (!loginData.error) {
+      // store loginData in local storage
+      localStorage.setItem("token", loginData.token);
+      localStorage.setItem("role", loginData.role);
+      localStorage.setItem("user", loginData);
+      // dispatch login action
+      dispatch({
+        type: "LOGIN",
+      });
+      // call snackbar
+      showToast(toastDispatch, "Login Successful");
+      // redirect to dashboard
+      navigate("/admin/dashboard");
+    } else {
+    }
   };
 
   return (
